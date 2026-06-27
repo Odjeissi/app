@@ -412,28 +412,38 @@ Screenshots were added to show:
 
 Screenshots are stored in:
 
-```text
-docs/screenshots/
-```
+[screenshots](https://github.com/Odjeissi/aws-user-profile-app/tree/main/docs/screenshots)
 
 ---
 
-## Troubleshooting and Lessons Learned
+## Troubleshooting
 
-During this project, I practiced fixing real DevOps issues, such as:
+During this project, I faced many challenges, but the ones that required the most work and debugging were the deployment pipeline. Below are some of the errors I encountered:
 
-* Docker permission problems on EC2
-* GitLab pipeline errors
-* Environment variable issues
-* SSH deployment from GitLab runners
-* Docker image build and push problems
-* Replacing old containers during deployment
-* Connecting the app to RDS
-* Giving the app access to S3
-* Checking that files were uploaded to S3
-* Checking that profile records were saved in the database
+### GitLab pipeline errors
 
-This helped me better understand how application code, cloud infrastructure, Docker, and CI/CD work together in a real deployment.
+![screenshots](docs/screenshots/troubleshooting/troubleshooting_pipeline.png)
+
+To pass the variables, I tried creating a .env file on the EC2 server using cat > .env in an SSH command, but the job failed with "No such file or directory" errors.
+The problem was that the heredoc did not work correctly through SSH. Instead of saving the variables in the .env file, the shell read them as file names.
+I fixed this by removing the .env file step and passing the variables directly to the Docker container using docker run -e. After this change, the deployment worked.
+This was also better because it avoided saving sensitive values in a .env file on the server.
+
+### Docker permissions
+
+![screenshots](docs/screenshots/troubleshooting/troubleshooting_docker_permissions.png)
+
+To solve this issue, I did a quick Google search for the error and found the solution on Stack Overflow.
+The problem happened because the current user did not have permission to read or write to the Docker socket file.
+To fix it, I added the user account to the system `docker` group. This was done using user data during the EC2 boot process.
+
+### Database Error
+
+![screenshots](docs/screenshots/troubleshooting/web_error.png)
+![screenshots](docs/screenshots/troubleshooting/web_error_2.png)
+
+This error happened because the required tables had not been created in the database yet. 
+The lesson learned was simple but important: always make sure the database tables are created before running or deploying the application.
 
 ---
 
