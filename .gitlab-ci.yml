@@ -6,46 +6,26 @@ workflow:
 default:
   image: python:3.11-alpine
 
+before_script:
+  - python -m venv venv
+  - source venv/bin/activate
+
 stages:
-  - prepare
   - test
   - build
   - deploy
-
-prepare_job:
-  stage: prepare
-  rules:
-    - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
-  before_script:
-    - python -m venv venv
-    - source venv/bin/activate
-  script:
-    - pip install -r requirements.txt
-  artifacts:
-    paths:
-      - venv/
 
 test_job:
   stage: test
   rules:
     - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
-  before_script:
-    - python -m venv venv
-    - source venv/bin/activate
-  dependencies:
-    - prepare_job
   script:
     - pytest -v
 
 lint_job:
   stage: test
-  dependencies:
-    - prepare_job
   rules:
     - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
-  before_script:
-    - python -m venv venv
-    - source venv/bin/activate
   script:
     - pylint app.py
 
@@ -53,7 +33,7 @@ build:
   stage: build
   image: docker:27
   rules:
-    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
   services:
     - docker:27-dind
   before_script:
